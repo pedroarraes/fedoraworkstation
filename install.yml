@@ -1,0 +1,95 @@
+- hosts: localhost
+  vars:
+    user_env: parraes
+  tasks:
+    - name: DNF fastest mirror
+      lineinfile:
+        path: /etc/dnf/dnf.conf
+        line: fastestmirror=1
+    - name: DNF max parallel
+      lineinfile:
+        path: /etc/dnf/dnf.conf
+        line: max_parallel_downloads=10
+    - name: install key insync
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://d2t3ff60b2tol4.cloudfront.net/repomd.xml.key
+    - name: set repo insync
+      ansible.builtin.copy: 
+        src: repo/insync.repo 
+        dest: /etc/yum.repos.d/insync.repo
+    - name: install key chrome
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://dl-ssl.google.com/linux/linux_signing_key.pub
+    - name: set repo chrome
+      ansible.builtin.copy: 
+        src: repo/google-chrome.repo 
+        dest: /etc/yum.repos.d/google-chrome.repo    
+    - name: install key microsoft
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://packages.microsoft.com/keys/microsoft.asc
+    - name: set repo microsoft
+      ansible.builtin.copy: 
+        src: repo/vscode.repo 
+        dest: /etc/yum.repos.d/vscode.repo   
+    - name: update os
+      dnf: 
+        state: latest
+        name: "*"    
+    - name: install packages
+      dnf:
+        state: present
+        name:
+         - tcsh 
+         - vim
+         - meld
+         - podman
+         - zip
+         - wget
+         - insync
+         - google-chrome-stable
+         - code
+         - pip
+         - npm
+         - virt-manager
+         - maven
+         - golang
+    - name: Install the 'Development tools' package group
+      dnf:
+        name: '@Development tools'
+    - name: Install DBeaver
+      dnf: 
+        name: https://dbeaver.io/files/dbeaver-ce-latest-stable.x86_64.rpm
+        state: present
+        disable_gpg_check: True
+    - name: Download Discord
+      get_url: 
+        url: https://discord.com/api/download?platform=linux&format=tar.gz
+        dest: /opt/discord.tar.gz
+    - name: Install Discord
+      ansible.builtin.unarchive:
+        src: /opt/discord.tar.gz
+        dest: /opt
+    - name: Download Postman
+      get_url:
+        url: https://dl.pstmn.io/download/latest/linux64
+        dest: /opt/postman-linux.tar.gz
+    - name: Install Postman
+      ansible.builtin.unarchive:
+        src: /opt/postman-linux.tar.gz
+        dest: /opt
+    - name: Download Visual VM
+      get_url:
+        url: https://github.com/oracle/visualvm/releases/download/2.0.6/visualvm_206.zip
+        dest: /opt/visualvm.zip
+    - name: Install Visual VM
+      ansible.builtin.unarchive:
+        src: /opt/visualvm.zip 
+        dest: /opt       
+    - name: Grant APPS
+      ansible.builtin.command: chown -R "{{ user_env }}":root /opt/Discord /opt/Postman
+    - name: Clean 
+      shell: rm -f /opt/discord.tar.gz /opt/postman-linux.tar.gz
+    
